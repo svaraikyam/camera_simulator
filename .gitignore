@@ -1,0 +1,38 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Video files (do not commit media to GitHub)
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.ts
+videos/*.mp4
+videos/*.mkv
+videos/*.avi
+videos/*.mov
+
+# Downloaded MediaMTX binary (downloaded automatically by scripts/setup.sh)
+bin/mediamtx
+
+# Runtime logs and PID files
+*.log
+*.pid
+.mediamtx.pid
+
+# Auto-generated WebRTC certificates
+auto.crt
+auto.key
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and OS files
+.DS_Store
+.vscode/
+.idea/

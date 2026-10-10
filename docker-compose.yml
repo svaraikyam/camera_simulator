@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mediamtx-camera-simulator:
+    image: bluenviron/mediamtx:latest-ffmpeg
+    container_name: camera_simulator
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./config/mediamtx.yml:/mediamtx.yml:ro
+      - ./videos:/videos:ro
+    environment:
+      - MTX_LOGLEVEL=info

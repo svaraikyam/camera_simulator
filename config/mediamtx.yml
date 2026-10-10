@@ -1,0 +1,117 @@
+###############################################################################
+# MediaMTX Configuration for RTSP Camera Simulator
+# Converts downloaded industrial AI videos to live RTSP streams.
+###############################################################################
+
+# General logging
+# logLevel: debug outputs complete RTSP/WebRTC handshakes and client request details
+logLevel: debug
+logDestinations: [stdout]
+logFile: ""
+
+###############################################################################
+# Protocols & Ports (0.0.0.0 binds to all network interfaces for LAN access)
+###############################################################################
+
+# RTSP Server (Port 8554)
+rtsp: yes
+rtspAddress: :8554
+# Supported transports: TCP is most reliable over LAN / Wi-Fi
+rtspTransports: [tcp, udp]
+rtspEncryption: "no"
+
+# WebRTC Server (Port 8889) - allows opening streams in any web browser without VLC!
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigins: ["*"]
+
+# HLS Server (Port 8888) - HTTP Live Streaming
+hls: yes
+hlsAddress: :8888
+
+# RTMP Server (Port 1935)
+rtmp: yes
+rtmpAddress: :1935
+
+# REST API (Port 9997) - used by stream_manager.py to query stream status
+api: yes
+apiAddress: :9997
+
+###############################################################################
+# Stream Paths Configuration
+###############################################################################
+paths:
+  #############################################################################
+  # 1. PPE Detection Camera (Hard Hats, Safety Vests, Industrial Safety)
+  # Stream URL: rtsp://<SERVER_IP>:8554/ppe
+  # WebRTC:     http://<SERVER_IP>:8889/ppe
+  #############################################################################
+  ppe:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe_detection.mp4
+      -map 0:v:0
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -profile:v baseline -pix_fmt yuv420p -bf 0
+      -r 25 -g 50 -crf 23
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe
+    runOnInitRestart: yes
+
+  #############################################################################
+  # 2. Fire and Smoke Detection Camera (Hazard & Flame Monitoring)
+  # Stream URL: rtsp://<SERVER_IP>:8554/fire-smoke
+  # WebRTC:     http://<SERVER_IP>:8889/fire-smoke
+  #############################################################################
+  fire-smoke:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/fire_smoke_detection.mp4
+      -map 0:v:0
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -profile:v baseline -pix_fmt yuv420p -bf 0
+      -r 25 -g 50 -crf 23
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/fire-smoke
+    runOnInitRestart: yes
+
+  #############################################################################
+  # 3. Industrial IoT & Operations Camera (Factory Floor / Facility Monitoring)
+  # Stream URL: rtsp://<SERVER_IP>:8554/industrial-iot
+  # WebRTC:     http://<SERVER_IP>:8889/industrial-iot
+  #############################################################################
+  industrial-iot:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/industrial_iot.mp4
+      -map 0:v:0
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -profile:v baseline -pix_fmt yuv420p -bf 0
+      -r 25 -g 50 -crf 23
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/industrial-iot
+    runOnInitRestart: yes
+
+  #############################################################################
+  # Dynamic Converter for ANY other video in ./videos/<name>.mp4
+  # When any client requests rtsp://<SERVER_IP>:8554/<name>, this automatically
+  # triggers ffmpeg to loop ./videos/<name>.mp4 on-demand!
+  #############################################################################
+  all_others:
+    runOnDemand: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/$MTX_PATH.mp4
+      -map 0:v:0
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -profile:v baseline -pix_fmt yuv420p -bf 0
+      -r 25 -g 50 -crf 23
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/$MTX_PATH
+    runOnDemandRestart: yes
+    runOnDemandStartTimeout: 10s
+    runOnDemandCloseAfter: 10s
+
