@@ -14,6 +14,7 @@ videos/*.mp4
 videos/*.mkv
 videos/*.avi
 videos/*.mov
+videos/raw/
 
 # Downloaded MediaMTX binary (downloaded automatically by scripts/setup.sh)
 bin/mediamtx

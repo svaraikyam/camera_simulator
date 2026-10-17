@@ -37,78 +37,169 @@ rtmpAddress: :1935
 api: yes
 apiAddress: :9997
 
+playback: yes
+playbackAddress: :9996
+playbackAllowOrigins:
+  - http://127.0.0.1:3000
+  - http://localhost:3000
 ###############################################################################
 # Stream Paths Configuration
 ###############################################################################
 paths:
   #############################################################################
-  # 1. PPE Detection Camera (Hard Hats, Safety Vests, Industrial Safety)
-  # Stream URL: rtsp://<SERVER_IP>:8554/ppe
-  # WebRTC:     http://<SERVER_IP>:8889/ppe
+  # 1. PPE Detection Cameras
   #############################################################################
-  ppe:
+  ppe-detect-1:
     runOnInit: >-
       ffmpeg -nostats -loglevel warning
       -re -stream_loop -1
-      -i ./videos/ppe_detection.mp4
-      -map 0:v:0
-      -c:v libx264 -preset ultrafast -tune zerolatency
-      -profile:v baseline -pix_fmt yuv420p -bf 0
-      -r 25 -g 50 -crf 23
+      -i ./videos/ppe-video-4.mp4
+      -c:v copy
       -an -rtsp_transport tcp
-      -f rtsp rtsp://127.0.0.1:8554/ppe
+      -f rtsp rtsp://127.0.0.1:8554/ppe-detect-1
     runOnInitRestart: yes
 
+  ppe-detect-2:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-video-6.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-detect-2
+    runOnInitRestart: yes
+
+  ppe-detect-3:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-video-7.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-detect-3
+    runOnInitRestart: yes
+  
+  ppe-detect-4:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-video-9.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-detect-4
+    runOnInitRestart: yes
+
+  ppe-violate-1:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-video-8.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-violate-1
+    runOnInitRestart: yes
+  
+  ppe-violate-2:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-violation-2.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-violate-2
+    runOnInitRestart: yes
+
+  ppe-violate-3:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-video-5.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-violate-3
+    runOnInitRestart: yes 
+
   #############################################################################
-  # 2. Fire and Smoke Detection Camera (Hazard & Flame Monitoring)
-  # Stream URL: rtsp://<SERVER_IP>:8554/fire-smoke
-  # WebRTC:     http://<SERVER_IP>:8889/fire-smoke
+  # 2. Fire and Smoke Detection Cameras
   #############################################################################
   fire-smoke:
     runOnInit: >-
       ffmpeg -nostats -loglevel warning
       -re -stream_loop -1
       -i ./videos/fire_smoke_detection.mp4
-      -map 0:v:0
-      -c:v libx264 -preset ultrafast -tune zerolatency
-      -profile:v baseline -pix_fmt yuv420p -bf 0
-      -r 25 -g 50 -crf 23
+      -c:v copy
       -an -rtsp_transport tcp
       -f rtsp rtsp://127.0.0.1:8554/fire-smoke
     runOnInitRestart: yes
 
+  house-fire-worker:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/house-fire-worker.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/house-fire-worker
+    runOnInitRestart: yes
+
+  house-fire:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/house-fire.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/house-fire  
+    runOnInitRestart: yes
+
   #############################################################################
-  # 3. Industrial IoT & Operations Camera (Factory Floor / Facility Monitoring)
-  # Stream URL: rtsp://<SERVER_IP>:8554/industrial-iot
-  # WebRTC:     http://<SERVER_IP>:8889/industrial-iot
+  # 3. Industrial IoT & Operations Cameras
   #############################################################################
   industrial-iot:
     runOnInit: >-
       ffmpeg -nostats -loglevel warning
       -re -stream_loop -1
       -i ./videos/industrial_iot.mp4
-      -map 0:v:0
-      -c:v libx264 -preset ultrafast -tune zerolatency
-      -profile:v baseline -pix_fmt yuv420p -bf 0
-      -r 25 -g 50 -crf 23
+      -c:v copy
       -an -rtsp_transport tcp
       -f rtsp rtsp://127.0.0.1:8554/industrial-iot
     runOnInitRestart: yes
 
+  transformer-monitoring:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/transofmer-monitoring.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/transformer-monitoring
+    runOnInitRestart: yes
+
   #############################################################################
-  # Dynamic Converter for ANY other video in ./videos/<name>.mp4
+  # 4. Dynamic On-Demand Converter with NVIDIA RTX GPU Acceleration (NVENC)
   # When any client requests rtsp://<SERVER_IP>:8554/<name>, this automatically
-  # triggers ffmpeg to loop ./videos/<name>.mp4 on-demand!
+  # triggers the RTX GPU to stream ./videos/<name>.mp4 on-demand with zero CPU load!
   #############################################################################
+  # VisionSphere annotated output: <tenant-hex>/<run-hex>
+  '~^[a-f0-9]{32}/[a-f0-9]{32}$':
+    source: publisher
+    record: yes
+    recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+    recordFormat: fmp4
+    recordSegmentDuration: 1m
+    recordDeleteAfter: 7d
+
+  # GPU-accelerated dynamic converter for on-demand streams
   all_others:
     runOnDemand: >-
       ffmpeg -nostats -loglevel warning
       -re -stream_loop -1
       -i ./videos/$MTX_PATH.mp4
       -map 0:v:0
-      -c:v libx264 -preset ultrafast -tune zerolatency
+      -vf "scale=w=1920:h=1080:force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2"
+      -c:v h264_nvenc -preset p1 -tune ull
       -profile:v baseline -pix_fmt yuv420p -bf 0
-      -r 25 -g 50 -crf 23
+      -r 25 -g 50
       -an -rtsp_transport tcp
       -f rtsp rtsp://127.0.0.1:8554/$MTX_PATH
     runOnDemandRestart: yes

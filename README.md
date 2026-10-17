@@ -14,9 +14,10 @@ Designed specifically for testing Computer Vision and Industrial IoT models (PPE
   - **Industrial IoT / Facility Monitoring**: `rtsp://<HOST_IP>:8554/industrial-iot`
 - **Convert ANY Downloaded Video**: Add any video file (`.mp4`, `.mkv`, `.avi`, `.mov`) with a single command or by dropping it into `videos/`.
 - **Remote PC Access**: Streams over `0.0.0.0:8554` (RTSP TCP/UDP) so any device on your Wi-Fi/LAN can view or process the stream.
-- **Zero-CPU Pass-through**: Uses `-stream_loop -1 -c:v copy` whenever possible to loop streams indefinitely without consuming heavy CPU or GPU resources.
+- **NVIDIA RTX GPU Hardware Acceleration**: Hardware-accelerated batch optimization and on-demand live transcoding using `h264_nvenc` (tested on RTX 3060).
+- **Zero-CPU Stream Pass-through**: Uses `-stream_loop -1 -c:v copy` for permanent multi-camera feeds, allowing 12+ concurrent streams with less than 7% total CPU load.
 - **Instant Web Browser Viewing**: Includes built-in WebRTC (`http://<HOST_IP>:8889/<stream>`) to watch streams in Google Chrome, Edge, or Firefox without installing VLC or any media player.
-- **Interactive CLI Manager**: `python3 scripts/stream_manager.py` automatically detects host LAN IP, lists all stream URLs, and manages server lifecycle.
+- **Interactive CLI Manager**: `python3 scripts/stream_manager.py` automatically detects host LAN IP, lists all stream URLs, optimizes videos, and manages server lifecycle.
 
 ---
 
@@ -29,18 +30,21 @@ camera-simulator/
 ├── config/
 │   └── mediamtx.yml              # Server & stream paths configuration
 ├── videos/                       # Place downloaded video files here
+│   ├── raw/                      # Automatically preserved raw 4K originals
 │   ├── ppe_detection.mp4         # Sample PPE detection video
 │   ├── fire_smoke_detection.mp4  # Sample Fire & Smoke detection video
 │   └── industrial_iot.mp4        # Sample Industrial IoT video
 ├── scripts/
 │   ├── setup.sh                  # Checks dependencies & downloads assets
 │   ├── download_samples.py       # Downloads industrial sample videos
-│   ├── stream_manager.py         # CLI manager (start, stop, list, add, test)
+│   ├── optimize_videos.py        # GPU-accelerated video batch optimizer
+│   ├── stream_manager.py         # CLI manager (start, stop, list, add, optimize, test)
 │   └── test_client.py            # Local/remote RTSP stream test utility
 ├── run.sh                        # One-click start script
 ├── stop.sh                       # One-click stop script
 ├── docker-compose.yml            # Docker deployment option
 ├── requirements.txt              # Optional Python test dependencies
+├── PERFORMANCE_AND_GPU_GUIDE.md  # Detailed performance root cause & GPU guide
 └── README.md                     # Documentation
 ```
 
@@ -208,6 +212,25 @@ docker compose down
 
 ---
 
+## Performance & NVIDIA RTX GPU Acceleration
+
+To avoid CPU saturation when streaming 12+ cameras simultaneously, the simulator uses a **Dual-Strategy Architecture**:
+
+1. **Strategy A (Permanent Feeds)**: Pre-transcoded with Baseline H.264, GOP 50, and 0 B-frames, streaming via `-c:v copy` (Zero-CPU pass-through).
+2. **Strategy B (On-Demand Feeds)**: Dynamic videos requested on-the-fly use NVIDIA NVENC (`h264_nvenc`) hardware acceleration with bounded 1080p scaling.
+
+> [!NOTE]
+> Read the complete architectural analysis, benchmarks, and tuning tips in [PERFORMANCE_AND_GPU_GUIDE.md](file:///media/avaish/aiwork/camera-simulator/PERFORMANCE_AND_GPU_GUIDE.md).
+
+### Batch Video Optimizer
+To optimize all videos in `videos/` for zero-CPU streaming using the RTX GPU:
+```bash
+python3 scripts/stream_manager.py optimize
+```
+*(Original full-resolution files are safely preserved in `videos/raw/`).*
+
+---
+
 ## CLI Reference
 
 ```bash
@@ -216,6 +239,7 @@ python3 scripts/stream_manager.py start             # Start the server
 python3 scripts/stream_manager.py stop              # Stop the server
 python3 scripts/stream_manager.py restart           # Restart the server
 python3 scripts/stream_manager.py status            # Check server & stream health
-python3 scripts/stream_manager.py add <video_path>  # Convert a downloaded video to an RTSP link
+python3 scripts/stream_manager.py optimize          # Optimize videos using RTX GPU (NVENC)
+python3 scripts/stream_manager.py add <video_path>  # Convert & optimize a video to an RTSP link
 python3 scripts/stream_manager.py test ppe          # Test and probe an RTSP stream locally
 ```

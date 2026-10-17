@@ -57,17 +57,29 @@ def is_server_running():
             os.kill(pid, 0)
             return pid
         except (OSError, ValueError):
-            if os.path.exists(PID_FILE):
-                os.remove(PID_FILE)
+            pass
     
     # Secondary check using pgrep
     try:
-        res = subprocess.run(["pgrep", "-f", "mediamtx config/mediamtx.yml"], stdout=subprocess.PIPE, text=True)
+        res = subprocess.run(["pgrep", "-f", "mediamtx.*mediamtx.yml"], stdout=subprocess.PIPE, text=True)
         if res.stdout.strip():
             pids = res.stdout.strip().split()
-            return int(pids[0])
+            found_pid = int(pids[0])
+            with open(PID_FILE, "w") as f:
+                f.write(str(found_pid))
+            return found_pid
     except Exception:
         pass
+
+    # Tertiary check: probe REST API port 9997
+    try:
+        req = urllib.request.Request("http://127.0.0.1:9997/v3/paths/list")
+        with urllib.request.urlopen(req, timeout=0.5) as resp:
+            if resp.status == 200:
+                return -1 # Running (PID unknown)
+    except Exception:
+        pass
+
     return None
 
 def start_server():
@@ -243,7 +255,7 @@ def list_streams():
     print("=========================================================================================\n")
 
 def add_video(src_path: str, stream_name: str = None):
-    """Adds a new downloaded video file and converts it if needed."""
+    """Adds a new downloaded video file and converts it to RTSP streaming-ready format."""
     if not os.path.exists(src_path):
         print(f"[!] Error: Source file not found: {src_path}")
         sys.exit(1)
@@ -263,33 +275,27 @@ def add_video(src_path: str, stream_name: str = None):
     print(f"    Target stream name: {safe_name}")
     print(f"    Target file: {dest_path}")
 
-    # Check if already H.264 MP4
-    is_h264 = False
-    try:
-        probe = subprocess.run(
-            ["ffprobe", "-v", "error", "-select_streams", "v:0",
-             "-show_entries", "stream=codec_name", "-of", "default=noprint_wrappers=1:nokey=1", src_path],
-            stdout=subprocess.PIPE, text=True, check=True
-        )
-        if "h264" in probe.stdout.lower() and ext.lower() == ".mp4":
-            is_h264 = True
-    except Exception:
-        pass
-
-    if is_h264 and os.path.abspath(src_path) != os.path.abspath(dest_path):
-        print("    File is already H.264 MP4. Copying directly...")
-        shutil.copy2(src_path, dest_path)
-    elif not is_h264:
+    # Optimize using scripts/optimize_videos.py
+    optimize_script = os.path.join(BASE_DIR, "scripts", "optimize_videos.py")
+    if os.path.exists(optimize_script):
+        # First copy to temp or target if different
+        if os.path.abspath(src_path) != os.path.abspath(dest_path):
+            shutil.copy2(src_path, dest_path)
+        cmd = [sys.executable, optimize_script, "--file", dest_path]
+        subprocess.run(cmd, check=True)
+    else:
+        # Fallback transcoding to RTSP-optimized H.264 MP4 using ffmpeg
         print("    Transcoding to RTSP-optimized H.264 MP4 using ffmpeg...")
         cmd = [
             "ffmpeg", "-y", "-i", src_path,
             "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
+            "-profile:v", "baseline", "-bf", "0", "-g", "50", "-r", "25",
             "-an", dest_path
         ]
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     lan_ip = get_lan_ip()
-    print(f"\n[✓] Video successfully added!")
+    print(f"\n[✓] Video successfully added & optimized for zero-CPU RTSP streaming!")
     print(f"    Stream is immediately live on-demand at:")
     print(f"    Local RTSP:      rtsp://127.0.0.1:8554/{safe_name}")
     print(f"    Remote PC (LAN): rtsp://{lan_ip}:8554/{safe_name}")
@@ -374,6 +380,10 @@ def main():
     test_parser = subparsers.add_parser("test", help="Test an RTSP stream locally")
     test_parser.add_argument("stream", nargs="?", default="ppe", help="Stream name to probe (default: ppe)")
 
+    opt_parser = subparsers.add_parser("optimize", help="Optimize videos using RTX GPU (NVENC downscale & Baseline H.264 for zero-CPU streaming)")
+    opt_parser.add_argument("--file", help="Specific video file to optimize")
+    opt_parser.add_argument("--cpu", action="store_true", help="Force software CPU encoding instead of NVIDIA NVENC")
+
     args = parser.parse_args()
 
     if args.command == "start":
@@ -399,6 +409,14 @@ def main():
         add_video(args.file, args.name)
     elif args.command == "test":
         test_stream(args.stream)
+    elif args.command == "optimize":
+        optimize_script = os.path.join(BASE_DIR, "scripts", "optimize_videos.py")
+        cmd = [sys.executable, optimize_script]
+        if args.file:
+            cmd.extend(["--file", args.file])
+        if args.cpu:
+            cmd.append("--cpu")
+        subprocess.run(cmd)
     else:
         parser.print_help()
 
