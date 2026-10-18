@@ -194,9 +194,36 @@ def list_streams():
     print("=========================================================================================")
 
     predefined_paths = [
+        # Standard Primary Streams
         ("ppe", "videos/ppe_detection.mp4", "PPE Detection (Helmets, Safety Vests, PPE AI)"),
+        ("ppe-detection", "videos/ppe-detection.mp4", "PPE Detection Camera 2"),
         ("fire-smoke", "videos/fire_smoke_detection.mp4", "Fire & Smoke Detection (Hazard/Flame AI)"),
+        ("house-fire", "videos/house-fire.mp4", "House Fire Incident Camera"),
+        ("house-fire-worker", "videos/house-fire-worker.mp4", "House Fire & Worker Hazard Camera"),
         ("industrial-iot", "videos/industrial_iot.mp4", "Industrial IoT / Facility Surveillance"),
+        ("transformer-monitoring", "videos/transofmer-monitoring.mp4", "Transformer & Substation Surveillance"),
+        
+        # PPE Detection Multi-Camera (ppe-detect-1 to 4)
+        ("ppe-detect-1", "videos/ppe-video-4.mp4", "PPE Detection Cam 1 (Video 4)"),
+        ("ppe-detect-2", "videos/ppe-video-6.mp4", "PPE Detection Cam 2 (Video 6)"),
+        ("ppe-detect-3", "videos/ppe-video-7.mp4", "PPE Detection Cam 3 (Video 7)"),
+        ("ppe-detect-4", "videos/ppe-video-9.mp4", "PPE Detection Cam 4 (Video 9)"),
+
+        # PPE Violations Multi-Camera (ppe-violate-1 to 3)
+        ("ppe-violate-1", "videos/ppe-video-8.mp4", "PPE Violation Cam 1 (Video 8)"),
+        ("ppe-violate-2", "videos/ppe-violation-2.mp4", "PPE Violation Cam 2 (Violation 2)"),
+        ("ppe-violate-3", "videos/ppe-video-5.mp4", "PPE Violation Cam 3 (Video 5)"),
+
+        # Direct Video Filename Feeds (Direct Edge Gateway Ingest)
+        ("ppe-video-4", "videos/ppe-video-4.mp4", "PPE Video 4 Direct Feed"),
+        ("ppe-video-5", "videos/ppe-video-5.mp4", "PPE Video 5 Direct Feed"),
+        ("ppe-video-6", "videos/ppe-video-6.mp4", "PPE Video 6 Direct Feed"),
+        ("ppe-video-7", "videos/ppe-video-7.mp4", "PPE Video 7 Direct Feed"),
+        ("ppe-video-8", "videos/ppe-video-8.mp4", "PPE Video 8 Direct Feed"),
+        ("ppe-video-9", "videos/ppe-video-9.mp4", "PPE Video 9 Direct Feed"),
+        ("ppe-violation-1", "videos/ppe-violation-1.mp4", "PPE Violation 1 Direct Feed"),
+        ("ppe-violation-2", "videos/ppe-violation-2.mp4", "PPE Violation 2 Direct Feed"),
+        ("ppe-violation-3", "videos/ppe-violation-3.mp4", "PPE Violation 3 Direct Feed"),
     ]
 
     api_info = query_api_paths() if pid else {}

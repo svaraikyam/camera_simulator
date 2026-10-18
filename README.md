@@ -82,13 +82,33 @@ source .venv/bin/activate
 
 ## Pre-configured Industrial RTSP Streams
 
+Every stream is a **permanent, continuously looping publisher** running with `-re -stream_loop -1` and `runOnInitRestart: yes`. This ensures edge gateways (such as VisionSphere Edge Orchestrator or NVRs) can disconnect and reconnect at any time without terminating the stream.
+
+### Primary Surveillance Feeds
 | Stream Name | Description | Local RTSP URL | Remote PC (LAN) URL | Web Browser (WebRTC) |
 |---|---|---|---|---|
 | **ppe** | PPE Detection (Hard Hats, Safety Vests) | `rtsp://127.0.0.1:8554/ppe` | `rtsp://<HOST_IP>:8554/ppe` | `http://<HOST_IP>:8889/ppe` |
 | **fire-smoke** | Fire & Smoke Hazard Detection | `rtsp://127.0.0.1:8554/fire-smoke` | `rtsp://<HOST_IP>:8554/fire-smoke` | `http://<HOST_IP>:8889/fire-smoke` |
 | **industrial-iot** | Facility / Industrial Surveillance | `rtsp://127.0.0.1:8554/industrial-iot` | `rtsp://<HOST_IP>:8554/industrial-iot` | `http://<HOST_IP>:8889/industrial-iot` |
+| **transformer-monitoring** | Transformer & Substation Monitoring | `rtsp://127.0.0.1:8554/transformer-monitoring` | `rtsp://<HOST_IP>:8554/transformer-monitoring` | `http://<HOST_IP>:8889/transformer-monitoring` |
+| **house-fire** | House Fire Incident Camera | `rtsp://127.0.0.1:8554/house-fire` | `rtsp://<HOST_IP>:8554/house-fire` | `http://<HOST_IP>:8889/house-fire` |
+| **house-fire-worker** | House Fire & Worker Hazard Camera | `rtsp://127.0.0.1:8554/house-fire-worker` | `rtsp://<HOST_IP>:8554/house-fire-worker` | `http://<HOST_IP>:8889/house-fire-worker` |
 
-*(Replace `<HOST_IP>` with the IP printed by `python3 scripts/stream_manager.py list`, e.g. `192.168.1.50`)*
+### Multi-Camera PPE Feeds (Detection & Violations)
+| Stream Name | Video Source | RTSP URL |
+|---|---|---|
+| `ppe-detect-1` / `ppe-video-4` | `videos/ppe-video-4.mp4` | `rtsp://<HOST_IP>:8554/ppe-detect-1` |
+| `ppe-detect-2` / `ppe-video-6` | `videos/ppe-video-6.mp4` | `rtsp://<HOST_IP>:8554/ppe-detect-2` |
+| `ppe-detect-3` / `ppe-video-7` | `videos/ppe-video-7.mp4` | `rtsp://<HOST_IP>:8554/ppe-detect-3` |
+| `ppe-detect-4` / `ppe-video-9` | `videos/ppe-video-9.mp4` | `rtsp://<HOST_IP>:8554/ppe-detect-4` |
+| `ppe-violate-1` / `ppe-video-8` | `videos/ppe-video-8.mp4` | `rtsp://<HOST_IP>:8554/ppe-violate-1` |
+| `ppe-violate-2` / `ppe-violation-2` | `videos/ppe-violation-2.mp4` | `rtsp://<HOST_IP>:8554/ppe-violate-2` |
+| `ppe-violate-3` / `ppe-video-5` | `videos/ppe-video-5.mp4` | `rtsp://<HOST_IP>:8554/ppe-violate-3` |
+| `ppe-violation-1` | `videos/ppe-violation-1.mp4` | `rtsp://<HOST_IP>:8554/ppe-violation-1` |
+| `ppe-violation-3` | `videos/ppe-violation-3.mp4` | `rtsp://<HOST_IP>:8554/ppe-violation-3` |
+
+*(Replace `<HOST_IP>` with the LAN IP printed by `python3 scripts/stream_manager.py list`, e.g. `192.168.1.26`)*
+
 
 ---
 
