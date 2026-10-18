@@ -252,6 +252,27 @@ paths:
       -f rtsp rtsp://127.0.0.1:8554/ppe-violation-3
     runOnInitRestart: yes
 
+  # Newly Added PPE Cameras
+  ppe-no-helmet-1:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-no-helmet-1.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-no-helmet-1
+    runOnInitRestart: yes
+
+  ppe-video-10:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-video-10.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-video-10
+    runOnInitRestart: yes
+
   #############################################################################
   # 2. Fire and Smoke Detection Cameras
   #############################################################################

@@ -224,6 +224,8 @@ def list_streams():
         ("ppe-violation-1", "videos/ppe-violation-1.mp4", "PPE Violation 1 Direct Feed"),
         ("ppe-violation-2", "videos/ppe-violation-2.mp4", "PPE Violation 2 Direct Feed"),
         ("ppe-violation-3", "videos/ppe-violation-3.mp4", "PPE Violation 3 Direct Feed"),
+        ("ppe-no-helmet-1", "videos/ppe-no-helmet-1.mp4", "PPE No-Helmet Detection Feed 1"),
+        ("ppe-video-10", "videos/ppe-video-10.mp4", "PPE Video 10 Direct Feed"),
     ]
 
     api_info = query_api_paths() if pid else {}
@@ -321,9 +323,48 @@ def add_video(src_path: str, stream_name: str = None):
         ]
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+    # Automatically add to config/mediamtx.yml as permanent publisher if not present
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "r") as f:
+            content = f.read()
+        
+        path_key = f"\n  {safe_name}:"
+        if path_key not in content:
+            print(f"    Registering '{safe_name}' as a permanent looping publisher in config/mediamtx.yml...")
+            entry = (
+                f"\n  {safe_name}:\n"
+                f"    runOnInit: >-\n"
+                f"      ffmpeg -nostats -loglevel warning\n"
+                f"      -re -stream_loop -1\n"
+                f"      -i ./videos/{target_mp4}\n"
+                f"      -c:v copy\n"
+                f"      -an -rtsp_transport tcp\n"
+                f"      -f rtsp rtsp://127.0.0.1:8554/{safe_name}\n"
+                f"    runOnInitRestart: yes\n"
+            )
+            insert_marker = "  '~^[a-f0-9]{32}/[a-f0-9]{32}$':"
+            if insert_marker in content:
+                idx = content.find(insert_marker)
+                new_content = content[:idx] + entry + "\n" + content[idx:]
+            elif "  all_others:" in content:
+                idx = content.find("  all_others:")
+                new_content = content[:idx] + entry + "\n" + content[idx:]
+            else:
+                new_content = content + entry
+            with open(CONFIG_PATH, "w") as f:
+                f.write(new_content)
+            
+            # Restart server if currently running so new stream is immediately active
+            pid = is_server_running()
+            if pid:
+                print("    Restarting MediaMTX to activate permanent stream...")
+                stop_server()
+                time.sleep(1)
+                start_server()
+
     lan_ip = get_lan_ip()
-    print(f"\n[✓] Video successfully added & optimized for zero-CPU RTSP streaming!")
-    print(f"    Stream is immediately live on-demand at:")
+    print(f"\n[✓] Video successfully added & running as permanent looping RTSP stream!")
+    print(f"    Stream is immediately live at:")
     print(f"    Local RTSP:      rtsp://127.0.0.1:8554/{safe_name}")
     print(f"    Remote PC (LAN): rtsp://{lan_ip}:8554/{safe_name}")
     print(f"    Web Browser:     http://{lan_ip}:8889/{safe_name}")
