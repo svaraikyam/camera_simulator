@@ -107,6 +107,14 @@ Every stream is a **permanent, continuously looping publisher** running with `-r
 | `ppe-violation-1` | `videos/ppe-violation-1.mp4` | `rtsp://<HOST_IP>:8554/ppe-violation-1` |
 | `ppe-violation-3` | `videos/ppe-violation-3.mp4` | `rtsp://<HOST_IP>:8554/ppe-violation-3` |
 
+### Crowd Counting Multi-Camera Feeds (4K UHD)
+| Stream Name | Resolution | Description | RTSP URL |
+|---|---|---|---|
+| **crowd-video-1** | 3840×2160 (4K) | Crowd Monitoring Camera 1 (Landscape 4K) | `rtsp://<HOST_IP>:8554/crowd-video-1` |
+| **crowd-video-11** | 2160×3840 (4K) | High-Density Crowd Counting (Vertical 4K) | `rtsp://<HOST_IP>:8554/crowd-video-11` |
+| **crowd-video-12** | 2160×3840 (4K) | High-Density Crowd Counting (Vertical 4K) | `rtsp://<HOST_IP>:8554/crowd-video-12` |
+| **crowd-video-13** | 768×432 | Crowd Overview Camera 13 | `rtsp://<HOST_IP>:8554/crowd-video-13` |
+
 *(Replace `<HOST_IP>` with the LAN IP printed by `python3 scripts/stream_manager.py list`, e.g. `192.168.1.26`)*
 
 
@@ -117,10 +125,15 @@ Every stream is a **permanent, continuously looping publisher** running with `-r
 ### Method A: Stream Manager CLI (Recommended)
 You can convert any video file using `stream_manager.py add`:
 ```bash
-python3 scripts/stream_manager.py add /path/to/my_downloaded_video.mp4 --name warehouse-forklift
+# Standard 1080p bounded stream (for PPE, fire, vehicle detection)
+python3 scripts/stream_manager.py add /path/to/my_video.mp4 --name warehouse-forklift
+
+# Preserve Full 4K Resolution (for Crowd Counting, small-defect detection, etc.)
+python3 scripts/stream_manager.py add /path/to/my_4k_video.mp4 --name crowd-cam-4 --4k
 ```
-- It automatically verifies the video encoding, converts to H.264 if needed, and saves it in `videos/`.
-- It will print your new RTSP link immediately:
+- It automatically verifies the video encoding, converts to H.264 Baseline with zero B-frames using the NVIDIA RTX GPU (NVENC), and saves it in `videos/`.
+- It registers the stream as a permanent looping publisher in `config/mediamtx.yml` and restarts MediaMTX.
+- It prints your new RTSP link immediately:
   - `rtsp://<HOST_IP>:8554/warehouse-forklift`
 
 ### Method B: Drop Video Into `videos/` (Dynamic On-Demand)
@@ -254,12 +267,14 @@ python3 scripts/stream_manager.py optimize
 ## CLI Reference
 
 ```bash
-python3 scripts/stream_manager.py list              # List all available RTSP links
-python3 scripts/stream_manager.py start             # Start the server
-python3 scripts/stream_manager.py stop              # Stop the server
-python3 scripts/stream_manager.py restart           # Restart the server
-python3 scripts/stream_manager.py status            # Check server & stream health
-python3 scripts/stream_manager.py optimize          # Optimize videos using RTX GPU (NVENC)
-python3 scripts/stream_manager.py add <video_path>  # Convert & optimize a video to an RTSP link
-python3 scripts/stream_manager.py test ppe          # Test and probe an RTSP stream locally
+python3 scripts/stream_manager.py list                    # List all available RTSP links
+python3 scripts/stream_manager.py start                   # Start the server
+python3 scripts/stream_manager.py stop                    # Stop the server
+python3 scripts/stream_manager.py restart                 # Restart the server
+python3 scripts/stream_manager.py status                  # Check server & stream health
+python3 scripts/stream_manager.py optimize                # Optimize videos using RTX GPU (NVENC)
+python3 scripts/stream_manager.py optimize --4k           # Optimize videos preserving 4K resolution
+python3 scripts/stream_manager.py add <video_path>        # Convert & optimize video to RTSP link
+python3 scripts/stream_manager.py add <video_path> --4k   # Convert & preserve 4K resolution
+python3 scripts/stream_manager.py test ppe                # Test and probe an RTSP stream locally
 ```

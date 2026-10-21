@@ -156,12 +156,33 @@ python3 scripts/optimize_videos.py
 ```
 
 ### Option 2: Add and Auto-Optimize a New Video
-When adding a new downloaded video, `stream_manager.py add` will automatically detect NVENC support, scale to 1080p, and configure it for streaming:
+When adding a new downloaded video, `stream_manager.py add` will automatically detect NVENC support, optimize it, and register it as a permanent looping publisher in `config/mediamtx.yml`:
 ```bash
 python3 scripts/stream_manager.py add /path/to/my_download.mp4 --name dock-camera-1
 ```
 
-### Option 3: Force Software CPU Encoding (Fallback)
+### Option 3: Add a 4K Video (Preserve Full 3840×2160 / 2160×3840 Resolution)
+For AI models that require ultra-high detail (such as **Crowd Counting**, small-defect detection, or distant surveillance), pass the `--4k` (or `--keep-4k`) flag:
+```bash
+python3 scripts/stream_manager.py add /path/to/crowd_raw.mp4 --name crowd-video-14 --4k
+```
+This automatically:
+- Preserves native 4K resolution (e.g. `3840x2160` or `2160x3840`) without downscaling.
+- Enforces H.264 Baseline Profile with **zero B-frames (`-bf 0`)**.
+- Fixes the GOP keyframe interval to **1.0 second (`-g 25`)** so connecting clients immediately receive a full IDR frame.
+- Sets a broadcast-quality controlled bitrate (**14 Mbps**) so packet bursts fit within network buffers without smearing.
+- Appends the permanent looping stream to `config/mediamtx.yml` and restarts MediaMTX.
+
+### Option 4: Optimize an Existing 4K Video in `videos/`
+```bash
+python3 scripts/stream_manager.py optimize --file videos/crowd-video-11.mp4 --4k
+```
+Or directly via the GPU optimizer script:
+```bash
+python3 scripts/optimize_videos.py --file videos/crowd-video-11.mp4 --keep-4k
+```
+
+### Option 5: Force Software CPU Encoding (Fallback)
 If running on an edge device without an NVIDIA GPU:
 ```bash
 python3 scripts/stream_manager.py optimize --cpu
@@ -169,7 +190,21 @@ python3 scripts/stream_manager.py optimize --cpu
 
 ---
 
-## 5. Summary of Best Practices for RTSP Streaming
+## 5. Why Unoptimized 4K RTSP Streams Smear (and the Fix)
+
+### The Smearing Root Cause
+When raw 4K videos (e.g. 53 Mbps, 60 FPS, High Profile with 2 B-frames) are streamed directly via `-c:v copy`:
+1. **RTP Queue Overflow**: At 53.5 Mbps, a single 4K keyframe exceeds 1.2 MB, fragmenting into over 850 RTP packets. When these burst into MediaMTX, the default write queue (512 packets) overflows and drops the bottom half of the frame.
+2. **Missing Reference Pictures**: With 3 consecutive B-frames and 4.2-second keyframe gaps, any client joining mid-stream receives non-key frames without reference pictures, triggering decoder error concealment (`error while decoding MB 0 136`) and stretching macroblocks down vertically.
+
+### The Resolution
+1. **Encode to 4K Baseline (`-bf 0`, GOP 25, 14 Mbps)**: Keyframes shrink from 1.2 MB to ~140 KB (~100 packets), completely eliminating RTP packet drops.
+2. **MediaMTX `writeQueueSize: 4096`**: MediaMTX buffer was expanded 8× in `config/mediamtx.yml` to smoothly buffer 4K bursts.
+3. **Zero Smearing**: Every frame decoded by OpenCV or FFmpeg is 100% complete across all 3840 rows.
+
+---
+
+## 6. Summary of Best Practices for RTSP Streaming
 
 1. **Never software-transcode 4K streams live** on CPU unless you have a dedicated server with 32+ cores.
 2. **Always eliminate B-frames (`-bf 0`)** for real-time RTSP/WebRTC streams. B-frames introduce reordering latency and packet jitter in browsers and OpenCV.

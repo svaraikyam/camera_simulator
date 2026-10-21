@@ -290,7 +290,7 @@ def list_streams():
     print(f'    cap = cv2.VideoCapture("rtsp://{lan_ip}:8554/ppe")')
     print("=========================================================================================\n")
 
-def add_video(src_path: str, stream_name: str = None):
+def add_video(src_path: str, stream_name: str = None, keep_4k: bool = False):
     """Adds a new downloaded video file and converts it to RTSP streaming-ready format."""
     if not os.path.exists(src_path):
         print(f"[!] Error: Source file not found: {src_path}")
@@ -310,6 +310,8 @@ def add_video(src_path: str, stream_name: str = None):
     print(f"[+] Processing input video: {src_path}")
     print(f"    Target stream name: {safe_name}")
     print(f"    Target file: {dest_path}")
+    if keep_4k:
+        print(f"    Mode: Preserve Full 4K Resolution (High-detail crowd counting)")
 
     # Optimize using scripts/optimize_videos.py
     optimize_script = os.path.join(BASE_DIR, "scripts", "optimize_videos.py")
@@ -318,6 +320,8 @@ def add_video(src_path: str, stream_name: str = None):
         if os.path.abspath(src_path) != os.path.abspath(dest_path):
             shutil.copy2(src_path, dest_path)
         cmd = [sys.executable, optimize_script, "--file", dest_path]
+        if keep_4k:
+            cmd.append("--keep-4k")
         subprocess.run(cmd, check=True)
     else:
         # Fallback transcoding to RTSP-optimized H.264 MP4 using ffmpeg
@@ -325,7 +329,7 @@ def add_video(src_path: str, stream_name: str = None):
         cmd = [
             "ffmpeg", "-y", "-i", src_path,
             "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
-            "-profile:v", "baseline", "-bf", "0", "-g", "50", "-r", "25",
+            "-profile:v", "baseline", "-bf", "0", "-g", "25" if keep_4k else "50", "-r", "25",
             "-an", dest_path
         ]
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -451,6 +455,7 @@ def main():
     add_parser = subparsers.add_parser("add", help="Add a new video file to convert to RTSP")
     add_parser.add_argument("file", help="Path to downloaded video file (.mp4, .mkv, .avi, etc.)")
     add_parser.add_argument("--name", help="Custom RTSP stream path name (default: filename without extension)")
+    add_parser.add_argument("--4k", "--keep-4k", dest="keep_4k", action="store_true", help="Preserve full 4K resolution (do not downscale to 1080p)")
 
     test_parser = subparsers.add_parser("test", help="Test an RTSP stream locally")
     test_parser.add_argument("stream", nargs="?", default="ppe", help="Stream name to probe (default: ppe)")
@@ -458,6 +463,7 @@ def main():
     opt_parser = subparsers.add_parser("optimize", help="Optimize videos using RTX GPU (NVENC downscale & Baseline H.264 for zero-CPU streaming)")
     opt_parser.add_argument("--file", help="Specific video file to optimize")
     opt_parser.add_argument("--cpu", action="store_true", help="Force software CPU encoding instead of NVIDIA NVENC")
+    opt_parser.add_argument("--4k", "--keep-4k", dest="keep_4k", action="store_true", help="Preserve full 4K resolution (do not downscale to 1080p)")
 
     args = parser.parse_args()
 
@@ -481,7 +487,7 @@ def main():
         else:
             print("[x] MediaMTX is OFFLINE.")
     elif args.command == "add":
-        add_video(args.file, args.name)
+        add_video(args.file, args.name, keep_4k=args.keep_4k)
     elif args.command == "test":
         test_stream(args.stream)
     elif args.command == "optimize":
@@ -491,6 +497,8 @@ def main():
             cmd.extend(["--file", args.file])
         if args.cpu:
             cmd.append("--cpu")
+        if args.keep_4k:
+            cmd.append("--keep-4k")
         subprocess.run(cmd)
     else:
         parser.print_help()
