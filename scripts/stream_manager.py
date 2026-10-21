@@ -225,7 +225,14 @@ def list_streams():
         ("ppe-violation-2", "videos/ppe-violation-2.mp4", "PPE Violation 2 Direct Feed"),
         ("ppe-violation-3", "videos/ppe-violation-3.mp4", "PPE Violation 3 Direct Feed"),
         ("ppe-no-helmet-1", "videos/ppe-no-helmet-1.mp4", "PPE No-Helmet Detection Feed 1"),
+        ("ppe-no-helmet-2", "videos/ppe-no-helmet-2.mp4", "PPE No-Helmet Detection Feed 2"),
         ("ppe-video-10", "videos/ppe-video-10.mp4", "PPE Video 10 Direct Feed"),
+
+        # Crowd Counting Multi-Camera Feeds
+        ("crowd-video-1", "videos/crowd-video-1.mp4", "Crowd Monitoring Camera 1"),
+        ("crowd-video-11", "videos/crowd-video-11.mp4", "Crowd Counting 4K Camera 11"),
+        ("crowd-video-12", "videos/crowd-video-12.mp4", "Crowd Counting Camera 12"),
+        ("crowd-video-13", "videos/crowd-video-13.mp4", "Crowd Counting Camera 13"),
     ]
 
     api_info = query_api_paths() if pid else {}

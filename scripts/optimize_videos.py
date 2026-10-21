@@ -59,7 +59,7 @@ def get_video_info(video_path: Path):
     except Exception as e:
         return None
 
-def optimize_video(src_path: Path, dest_path: Path, use_gpu: bool = True, max_width: int = 1920, max_height: int = 1080):
+def optimize_video(src_path: Path, dest_path: Path, use_gpu: bool = True, max_width: int = 1920, max_height: int = 1080, keep_4k: bool = False):
     """Encodes a video into RTSP streaming-ready format."""
     info = get_video_info(src_path)
     if not info:
@@ -67,7 +67,22 @@ def optimize_video(src_path: Path, dest_path: Path, use_gpu: bool = True, max_wi
         return False
 
     w, h = info["width"], info["height"]
-    print(f"[+] Optimizing: {src_path.name} (Source: {w}x{h}, {info['codec']} {info['profile']})")
+    is_source_4k = w > 1920 or h > 1920
+
+    if keep_4k and is_source_4k:
+        max_width = max(w, 3840)
+        max_height = max(h, 3840)
+        bitrate = "14M"
+        maxrate = "18M"
+        bufsize = "36M"
+        gop = 25
+    else:
+        bitrate = "3M"
+        maxrate = "4M"
+        bufsize = "8M"
+        gop = 50
+
+    print(f"[+] Optimizing: {src_path.name} (Source: {w}x{h}, {info['codec']} {info['profile']}) [Target max: {max_width}x{max_height}, {bitrate}]")
 
     # Safe proportional scale filter that guarantees even dimensions (divisible by 2)
     # Bounded inside max_width x max_height
@@ -85,11 +100,11 @@ def optimize_video(src_path: Path, dest_path: Path, use_gpu: bool = True, max_wi
             "-tune", "hq",
             "-profile:v", "baseline",
             "-bf", "0",
-            "-g", "50",
+            "-g", str(gop),
             "-r", "25",
-            "-b:v", "3M",
-            "-maxrate", "4M",
-            "-bufsize", "8M",
+            "-b:v", bitrate,
+            "-maxrate", maxrate,
+            "-bufsize", bufsize,
             "-pix_fmt", "yuv420p"
         ]
     else:
@@ -99,9 +114,9 @@ def optimize_video(src_path: Path, dest_path: Path, use_gpu: bool = True, max_wi
             "-tune", "zerolatency",
             "-profile:v", "baseline",
             "-bf", "0",
-            "-g", "50",
+            "-g", str(gop),
             "-r", "25",
-            "-crf", "22",
+            "-crf", "20" if keep_4k else "22",
             "-pix_fmt", "yuv420p"
         ]
 
@@ -137,6 +152,7 @@ def main():
     parser = argparse.ArgumentParser(description="Optimize video files for zero-CPU RTSP streaming")
     parser.add_argument("--file", type=str, help="Specific file to optimize")
     parser.add_argument("--cpu", action="store_true", help="Force CPU encoding instead of NVIDIA NVENC")
+    parser.add_argument("--keep-4k", action="store_true", help="Preserve full 4K resolution (do not downscale to 1080p)")
     parser.add_argument("--backup-raw", action="store_true", default=True, help="Backup original 4K/raw files to videos/raw/")
     args = parser.parse_args()
 
@@ -184,7 +200,7 @@ def main():
                 print(f"[*] Preserving raw original -> {raw_backup.relative_to(BASE_DIR)}")
                 shutil.copy2(f, raw_backup)
 
-            optimize_video(f, f, use_gpu=use_gpu)
+            optimize_video(f, f, use_gpu=use_gpu, keep_4k=args.keep_4k)
         else:
             print(f"[i] Already optimized: {f.name} ({w}x{h}, {info['profile']})")
 

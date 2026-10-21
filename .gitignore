@@ -23,6 +23,9 @@ bin/mediamtx
 *.log
 *.pid
 .mediamtx.pid
+*.png
+*.jpg
+*.jpeg
 
 # Auto-generated WebRTC certificates
 auto.crt

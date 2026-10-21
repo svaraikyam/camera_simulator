@@ -19,6 +19,8 @@ rtsp: yes
 rtspAddress: :8554
 rtspTransports: [tcp, udp]
 rtspEncryption: "no"
+# High-throughput write queue for 4K streams (prevents packet drops on large I-frames)
+writeQueueSize: 4096
 
 # WebRTC Server (Port 8889) - allows opening streams in any web browser without VLC
 webrtc: yes
@@ -365,6 +367,62 @@ paths:
   # 4. VisionSphere Integration: Annotated Output Streams
   #############################################################################
   # VisionSphere annotated output: <tenant-hex>/<run-hex>
+
+  ppe-no-helmet-2:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/ppe-no-helmet-2.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/ppe-no-helmet-2
+    runOnInitRestart: yes
+
+
+  crowd-video-1:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/crowd-video-1.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/crowd-video-1
+    runOnInitRestart: yes
+
+
+  crowd-video-11:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/crowd-video-11.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/crowd-video-11
+    runOnInitRestart: yes
+
+
+  crowd-video-12:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/crowd-video-12.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/crowd-video-12
+    runOnInitRestart: yes
+
+
+  crowd-video-13:
+    runOnInit: >-
+      ffmpeg -nostats -loglevel warning
+      -re -stream_loop -1
+      -i ./videos/crowd-video-13.mp4
+      -c:v copy
+      -an -rtsp_transport tcp
+      -f rtsp rtsp://127.0.0.1:8554/crowd-video-13
+    runOnInitRestart: yes
+
+
   '~^[a-f0-9]{32}/[a-f0-9]{32}$':
     source: publisher
     record: yes
